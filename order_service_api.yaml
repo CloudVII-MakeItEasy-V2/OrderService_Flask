@@ -1,0 +1,287 @@
+openapi: 3.0.0
+info:
+  title: Order Management API
+  description: API for managing orders, including synchronous and asynchronous order creation, status updates, and order retrieval.
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: http://example.com/support
+    email: support@example.com
+
+servers:
+  - url: https://coms4153-cloud-computing.ue.r.appspot.com/
+    description: GCP server
+
+paths:
+  /:
+    get:
+      summary: Home
+      description: Returns a welcome message indicating the API is running.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Welcome to the Orders API"
+
+  /test_db_connection:
+    get:
+      summary: Test database connection
+      description: Attempts to connect to the database and return the database name if successful.
+      responses:
+        '200':
+          description: Successful connection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  database:
+                    type: string
+                    example: Order_Service
+        '500':
+          description: Database connection failed
+
+  /orders:
+    get:
+      summary: Get orders
+      description: Retrieve a list of orders with optional pagination and filtering by customer ID.
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination.
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+            default: 10
+          description: Number of orders per page.
+        - in: query
+          name: customer_id
+          schema:
+            type: integer
+          description: Filter orders by customer ID.
+      responses:
+        '200':
+          description: List of orders with pagination and item details.
+          headers:
+            Link:
+              description: Link to the next page of orders
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    order_id:
+                      type: integer
+                    customer_id:
+                      type: integer
+                    total_amount:
+                      type: string
+                    status:
+                      type: string
+                    tracking_number:
+                      type: string
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          product_id:
+                            type: integer
+                          quantity:
+                            type: integer
+                          price:
+                            type: number
+        '500':
+          description: Database error
+
+  /create_order:
+    post:
+      summary: Create a new order
+      description: Creates a new order with associated items and returns the order details.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customer_id:
+                  type: integer
+                status:
+                  type: string
+                  default: Pending
+                tracking_number:
+                  type: string
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      product_id:
+                        type: integer
+                      quantity:
+                        type: integer
+                      price:
+                        type: number
+      responses:
+        '201':
+          description: Order created successfully
+          headers:
+            Link:
+              description: Link to the created order
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                  customer_id:
+                    type: integer
+                  total_amount:
+                    type: string
+                  status:
+                    type: string
+                  tracking_number:
+                    type: string
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product_id:
+                          type: integer
+                        quantity:
+                          type: integer
+                        price:
+                          type: number
+        '500':
+          description: Database error
+
+  /create_order/async:
+    post:
+      summary: Create a new order asynchronously
+      description: Creates a new order asynchronously and optionally sends a callback when processing is complete.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customer_id:
+                  type: integer
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      product_id:
+                        type: integer
+                      quantity:
+                        type: integer
+                      price:
+                        type: number
+                callback_url:
+                  type: string
+                  description: Optional URL to receive status updates
+      responses:
+        '202':
+          description: Order is being processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Order is being processed"
+        '500':
+          description: Database error
+
+  /orders/{order_id}:
+    get:
+      summary: Get order by ID
+      description: Retrieve the details of a specific order by ID.
+      parameters:
+        - in: path
+          name: order_id
+          required: true
+          schema:
+            type: integer
+          description: ID of the order to retrieve.
+      responses:
+        '200':
+          description: Order details with items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                  customer_id:
+                    type: integer
+                  total_amount:
+                    type: string
+                  status:
+                    type: string
+                  tracking_number:
+                    type: string
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product_id:
+                          type: integer
+                        quantity:
+                          type: integer
+                        price:
+                          type: number
+        '404':
+          description: Order not found
+        '500':
+          description: Database error
+
+  /callback/{order_id}/status:
+    get:
+      summary: Check order status
+      description: Get the current status of an order by order ID.
+      parameters:
+        - in: path
+          name: order_id
+          required: true
+          schema:
+            type: integer
+          description: ID of the order to check status.
+      responses:
+        '200':
+          description: Current order status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                  status:
+                    type: string
+        '404':
+          description: Order not found
