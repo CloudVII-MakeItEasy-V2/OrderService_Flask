@@ -1,4 +1,4 @@
-runtime: python39  # or the correct runtime version you are using
+runtime: python39
 entrypoint: gunicorn -b :$PORT app:app
 
 env_variables:
@@ -6,3 +6,9 @@ env_variables:
   MYSQL_USER: "xz3052"
   MYSQL_PASSWORD: "dbuserdbuser"
   MYSQL_DB: "Order_Service"
+
+
+  AWS_ACCESS_KEY_ID: "YOUR_AWS_ACCESS_KEY_ID"
+  AWS_SECRET_ACCESS_KEY: "YOUR_AWS_SECRET_ACCESS_KEY"
+  AWS_REGION: "us-east-1"
+  AWS_SNS_TOPIC_ARN: "arn:aws:sns:us-east-1:361406357536:Makeiteasy.fifo"

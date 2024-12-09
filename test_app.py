@@ -6,12 +6,11 @@ from routes import get_db_connection
 flask_app.config['MYSQL_HOST'] = 'localhost'
 flask_app.config['MYSQL_USER'] = 'root'
 flask_app.config['MYSQL_PASSWORD'] = 'dbuserdbuser'
-flask_app.config['MYSQL_DB'] = 'p2_database'  # Use a separate test database
+flask_app.config['MYSQL_DB'] = 'p2_database'  # Use a separate test database for testing
 
 @pytest.fixture
 def app():
     yield flask_app  # This fixture is required by pytest-flask to access the app
-
 
 @pytest.fixture
 def setup_test_database():
@@ -19,7 +18,7 @@ def setup_test_database():
     connection = get_db_connection()
     cursor = connection.cursor()
 
-    # Disable foreign key checks to avoid constraint issues during table drop
+    # Disable foreign key checks
     cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
     cursor.execute("DROP TABLE IF EXISTS order_item")
     cursor.execute("DROP TABLE IF EXISTS orders")
@@ -44,17 +43,16 @@ def setup_test_database():
         )
     """)
 
-    # Insert test data if needed
+    # Insert test data
     cursor.execute("INSERT INTO orders (customer_id, status) VALUES (1, 'PENDING')")
     connection.commit()
 
     cursor.close()
     connection.close()
     
-    # Yield to indicate the setup phase is complete
     yield
 
-    # Teardown: Drop tables after tests
+    # Teardown
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
@@ -66,25 +64,25 @@ def setup_test_database():
     connection.close()
 
 def test_get_orders(client, setup_test_database):
-    # Test the GET /orders endpoint
     response = client.get('/orders')
     assert response.status_code == 200
     data = response.get_json()
-    assert isinstance(data, list)  # Check that we get a list of orders
-    assert len(data) > 0  # Ensure there’s at least one order in the response
-    assert data[0]['status'] == 'PENDING'  # Check a specific field in the first order
-
+    assert isinstance(data, dict)
+    assert 'orders' in data
+    assert len(data['orders']) > 0
+    assert data['orders'][0]['status'] == 'PENDING'
 
 def test_create_order(client, setup_test_database):
-    # Test the POST /orders endpoint
     new_order = {
         'customer_id': 2,
         'status': 'NEW'
     }
-    response = client.post('/orders', json=new_order)
+    # Note: The test code here references a /orders endpoint that was
+    # not explicitly defined as a POST in the above code. Adjust as needed
+    # to match your create endpoint (/create_order).
+    response = client.post('/create_order', json=new_order)
     assert response.status_code == 201
     data = response.get_json()
     assert data['customer_id'] == new_order['customer_id']
     assert data['status'] == new_order['status']
-    assert 'id' in data  # Check that the ID of the new order is returned
-
+    assert 'order_id' in data

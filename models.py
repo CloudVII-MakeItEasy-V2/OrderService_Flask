@@ -30,7 +30,9 @@ class Order(db.Model):
     order_items = db.relationship('OrderItem', backref='order', lazy=True)
 
     def calculate_total_price(self):
-        return sum(item.product.price * item.quantity for item in self.order_items)
+        # This assumes product price is known from a product model or external service.
+        # Adjust or remove as needed.
+        return sum(item.price * item.quantity for item in self.order_items)
 
 
 class OrderItem(db.Model):

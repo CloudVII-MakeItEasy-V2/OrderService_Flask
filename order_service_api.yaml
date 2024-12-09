@@ -80,31 +80,43 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    order_id:
-                      type: integer
-                    customer_id:
-                      type: integer
-                    total_amount:
-                      type: string
-                    status:
-                      type: string
-                    tracking_number:
-                      type: string
+                type: object
+                properties:
+                  orders:
+                    type: array
                     items:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          product_id:
-                            type: integer
-                          quantity:
-                            type: integer
-                          price:
-                            type: number
+                      type: object
+                      properties:
+                        order_id:
+                          type: integer
+                        customer_id:
+                          type: integer
+                        total_amount:
+                          type: string
+                        status:
+                          type: string
+                        tracking_number:
+                          type: string
+                        created_date:
+                          type: string
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              product_id:
+                                type: integer
+                              quantity:
+                                type: integer
+                              price:
+                                type: number
+                  _links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                      next:
+                        type: string
         '500':
           description: Database error
 
@@ -200,7 +212,6 @@ paths:
                         type: number
                 callback_url:
                   type: string
-                  description: Optional URL to receive status updates
       responses:
         '202':
           description: Order is being processed
@@ -244,6 +255,8 @@ paths:
                     type: string
                   tracking_number:
                     type: string
+                  created_date:
+                    type: string
                   items:
                     type: array
                     items:
@@ -255,6 +268,11 @@ paths:
                           type: integer
                         price:
                           type: number
+                  _links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
         '404':
           description: Order not found
         '500':
