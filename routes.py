@@ -340,3 +340,32 @@ def check_order_status(order_id):
         return jsonify({"order_id": order_id, "status": result['status']}), 200
     else:
         return jsonify({'error': 'Order not found'}), 404
+    
+@order_blueprint.route('/orders/<int:order_id>/track', methods=['GET'])
+def track_order(order_id):
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        # Retrieve the order's tracking number
+        cursor.execute("SELECT tracking_number FROM `Order` WHERE order_id = %s", (order_id,))
+        order = cursor.fetchone()
+
+        if not order or not order['tracking_number']:
+            return jsonify({"error": "Order not found or tracking number unavailable"}), 404
+
+        tracking_number = order['tracking_number']
+        tracking_url = f"https://www.trackingmore.com/track/en/{tracking_number}?express=ups"
+
+        return jsonify({
+            "order_id": order_id,
+            "tracking_number": tracking_number,
+            "tracking_url": tracking_url
+        }), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
